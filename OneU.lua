@@ -9,7 +9,14 @@ local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
-local ProtectGui = gethui or (syn and syn.protect_gui) or function(gui) gui.Parent = CoreGui end
+local isStudio = RunService:IsStudio()
+local ProtectGui = gethui or (syn and syn.protect_gui) or function(gui) 
+    if isStudio then 
+        gui.Parent = LocalPlayer:FindFirstChild("PlayerGui") or CoreGui
+    else
+        gui.Parent = CoreGui 
+    end
+end
 
 local Themes = {
     Dark = {
@@ -36,6 +43,12 @@ local Themes = {
 
 local SelectedTheme = Themes.Dark
 
+function OneU:SetTheme(name)
+    if Themes[name] then
+        SelectedTheme = Themes[name]
+    end
+end
+
 local function Create(class, props)
     local inst = Instance.new(class)
     for i, v in pairs(props) do
@@ -57,10 +70,10 @@ local function Tween(obj, props, time, style, dir)
 end
 
 local function Ripple(button)
-    spawn(function()
+    task.spawn(function()
         local mouse = UserInputService:GetMouseLocation()
         local absPos = button.AbsolutePosition
-        local relPos = Vector2.new(mouse.X - absPos.X, mouse.Y - absPos.Y - 36)
+        local relPos = Vector2.new(mouse.X - absPos.X, mouse.Y - absPos.Y - 58) -- Improved offset for top bar
         
         local circle = Create("Frame", {
             Name = "Ripple",
@@ -70,12 +83,12 @@ local function Ripple(button)
             BackgroundColor3 = Color3.new(1, 1, 1),
             BackgroundTransparency = 0.8,
             BorderSizePixel = 0,
-            ZIndex = 10
+            ZIndex = 11
         })
         Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = circle })
         
-        Tween(circle, { Size = UDim2.new(0, button.AbsoluteSize.X * 2, 0, button.AbsoluteSize.X * 2), BackgroundTransparency = 1 }, 0.6)
-        wait(0.6)
+        Tween(circle, { Size = UDim2.new(0, button.AbsoluteSize.X * 1.5, 0, button.AbsoluteSize.X * 1.5), BackgroundTransparency = 1 }, 0.5)
+        task.wait(0.5)
         circle:Destroy()
     end)
 end
@@ -137,9 +150,9 @@ function OneU:Notify(title, desc, duration)
     })
     
     Tween(frame, { Position = UDim2.new(1, -360, 1, -120) }, 0.6)
-    delay(duration or 5, function()
+    task.delay(duration or 5, function()
         Tween(frame, { Position = UDim2.new(1, 40, 1, -120), BackgroundTransparency = 1 }, 0.6)
-        wait(0.6)
+        task.wait(0.6)
         frame:Destroy()
     end)
 end
@@ -217,7 +230,11 @@ function OneU.new(title, subtitle)
         Parent = main
     })
     Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = close })
-    close.MouseButton1Click:Connect(function() Tween(main, { Size = UDim2.new(0, 0, 0, 0), Transparency = 1 }, 0.5) wait(0.5) gui:Destroy() end)
+    close.MouseButton1Click:Connect(function() 
+        Tween(main, { Size = UDim2.new(0, 0, 0, 0), Transparency = 1 }, 0.5) 
+        task.wait(0.5) 
+        gui:Destroy() 
+    end)
 
     MakeDraggable(main, sidebar)
     self.Main = main
